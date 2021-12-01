@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"myapp/ctr"
+	"myapp/gra"
 	"os"
 	"os/exec"
 	"runtime"
@@ -12,24 +14,7 @@ import (
 	"github.com/eiannone/keyboard"
 )
 
-var boardgame = []string{
-	"  |   |  ",
-	"──┼───┼──",
-	"  |   |  ",
-	"──┼───┼──",
-	"  |   |  ",
-}
-
-var cursorY = 2
-var cursorX = 4
-
-var cursor = "*"
-var cursorEmpty = string(boardgame[cursorY][cursorX]) // Guardo el character que estaba en la ubicación central antes de aparecer el cursor ahí.
-
-const LEFT_MARGIN = "            "
 const BLINK_TIME = 300
-const PLAYER = "O"
-const COMPUTER = "X"
 
 var winnerIs = ""
 
@@ -63,37 +48,37 @@ func main() {
 
 		switch key {
 		case keyboard.KeyArrowRight:
-			if cursorX < 8 { // Impido que el cursor se salga del tablero.
-				deleteCrusor()                                      // Borro el cursor en su posición actual por moverse a una nueva posición.
-				cursorEmpty = string(boardgame[cursorY][cursorX+4]) // Almaceno el character que ya esta en el lugar adonde se va a colocar el cursor. Lo convertirlo a string porque es un byte.
-				cursorX = cursorX + 4                               // Actualizo la posición del cursor segun la tecla presionada.
+			if ctr.CursorX < 8 { // Impido que el cursor se salga del tablero.
+				deleteCrusor()                                                    // Borro el cursor en su posición actual por moverse a una nueva posición.
+				gra.CursorInv = string(gra.Boardgame[ctr.CursorY][ctr.CursorX+4]) // Almaceno el character que ya esta en el lugar adonde se va a colocar el cursor. Lo convertirlo a string porque es un byte.
+				ctr.CursorX = ctr.CursorX + 4                                     // Actualizo la posición del cursor segun la tecla presionada.
 			}
 		case keyboard.KeyArrowLeft:
-			if cursorX > 0 {
+			if ctr.CursorX > 0 {
 				deleteCrusor()
-				cursorEmpty = string(boardgame[cursorY][cursorX-4])
-				cursorX = cursorX - 4
+				gra.CursorInv = string(gra.Boardgame[ctr.CursorY][ctr.CursorX-4])
+				ctr.CursorX = ctr.CursorX - 4
 			}
 		case keyboard.KeyArrowDown:
-			if cursorY < 4 {
+			if ctr.CursorY < 4 {
 				deleteCrusor()
-				cursorEmpty = string(boardgame[cursorY+2][cursorX])
-				cursorY = cursorY + 2
+				gra.CursorInv = string(gra.Boardgame[ctr.CursorY+2][ctr.CursorX])
+				ctr.CursorY = ctr.CursorY + 2
 			}
 		case keyboard.KeyArrowUp:
-			if cursorY > 0 {
+			if ctr.CursorY > 0 {
 				deleteCrusor()
-				cursorEmpty = string(boardgame[cursorY-2][cursorX])
-				cursorY = cursorY - 2
+				gra.CursorInv = string(gra.Boardgame[ctr.CursorY-2][ctr.CursorX])
+				ctr.CursorY = ctr.CursorY - 2
 			}
 		case keyboard.KeySpace:
-			if cursorEmpty == " " { // Si esta vacio el lugar que ocupa el cursor, poner la pieza del jugador.
+			if gra.CursorInv == " " { // Si esta vacio el lugar que ocupa el cursor, poner la pieza del jugador.
 				winControl()
-				cursorEmpty = PLAYER
+				gra.CursorInv = gra.PLAYER
 			}
 		case keyboard.KeyEnter:
-			if cursorEmpty == " " {
-				cursorEmpty = "X"
+			if gra.CursorInv == " " {
+				gra.CursorInv = gra.COMPUTER
 			}
 		default:
 			fmt.Print(string(char))
@@ -104,7 +89,7 @@ func main() {
 func winControl() {
 	// Control de filas ─
 	// Si en la fila en la que voy a poner una pieza ya hay dos piezas puesas, se gana la partida.
-	if strings.Count(boardgame[cursorY], PLAYER) == 2 {
+	if strings.Count(gra.Boardgame[ctr.CursorY], gra.PLAYER) == 2 {
 		winnerIs = "Player Wins!!"
 		return
 	}
@@ -112,8 +97,8 @@ func winControl() {
 	// Control de columnas |
 	//  Si en la columna en la que voy a poner una pieza ya hay dos piezas puestas, se gana la partida.
 	count := 0
-	for y := 0; y <= len(boardgame); y = y + 2 {
-		if string(boardgame[y][cursorX]) == PLAYER {
+	for y := 0; y <= len(gra.Boardgame); y = y + 2 {
+		if string(gra.Boardgame[y][ctr.CursorX]) == gra.PLAYER {
 			count++
 		}
 	}
@@ -124,26 +109,26 @@ func winControl() {
 
 	// Control de diagonal \
 	// Si en la diagonal en la que voy a poner una pieza ya hay dos piezas puesas, se gana la partida.
-	if (cursorY == 0 && cursorX == 0) && string(boardgame[2][4]) == PLAYER && string(boardgame[4][8]) == PLAYER {
+	if (ctr.CursorY == 0 && ctr.CursorX == 0) && string(gra.Boardgame[2][4]) == gra.PLAYER && string(gra.Boardgame[4][8]) == gra.PLAYER {
 		winnerIs = "Player Wins!!"
 		return
-	} else if (cursorY == 2 && cursorX == 4) && string(boardgame[0][0]) == PLAYER && string(boardgame[4][8]) == PLAYER {
+	} else if (ctr.CursorY == 2 && ctr.CursorX == 4) && string(gra.Boardgame[0][0]) == gra.PLAYER && string(gra.Boardgame[4][8]) == gra.PLAYER {
 		winnerIs = "Player Wins!!"
 		return
-	} else if (cursorY == 4 && cursorX == 8) && string(boardgame[0][0]) == PLAYER && string(boardgame[2][4]) == PLAYER {
+	} else if (ctr.CursorY == 4 && ctr.CursorX == 8) && string(gra.Boardgame[0][0]) == gra.PLAYER && string(gra.Boardgame[2][4]) == gra.PLAYER {
 		winnerIs = "Player Wins!!"
 		return
 	}
 
 	//Control de diagonal /
 	// Si en la diagonal en la que voy a poner una pieza ya hay dos piezas puesas, se gana la partida.
-	if (cursorY == 0 && cursorX == 8) && string(boardgame[2][4]) == PLAYER && string(boardgame[4][0]) == PLAYER {
+	if (ctr.CursorY == 0 && ctr.CursorX == 8) && string(gra.Boardgame[2][4]) == gra.PLAYER && string(gra.Boardgame[4][0]) == gra.PLAYER {
 		winnerIs = "Player Wins!!"
 		return
-	} else if (cursorY == 2 && cursorX == 4) && string(boardgame[0][8]) == PLAYER && string(boardgame[4][0]) == PLAYER {
+	} else if (ctr.CursorY == 2 && ctr.CursorX == 4) && string(gra.Boardgame[0][8]) == gra.PLAYER && string(gra.Boardgame[4][0]) == gra.PLAYER {
 		winnerIs = "Player Wins!!"
 		return
-	} else if (cursorY == 4 && cursorX == 0) && string(boardgame[0][8]) == PLAYER && string(boardgame[2][4]) == PLAYER {
+	} else if (ctr.CursorY == 4 && ctr.CursorX == 0) && string(gra.Boardgame[0][8]) == gra.PLAYER && string(gra.Boardgame[2][4]) == gra.PLAYER {
 		winnerIs = "Player Wins!!"
 		return
 	}
@@ -151,7 +136,7 @@ func winControl() {
 }
 
 func deleteCrusor() { // Borro el cursor en su posición actual por moverse a una nueva posición.
-	boardgame[cursorY] = fmt.Sprintf("%v%v%v", boardgame[cursorY][:cursorX], cursorEmpty, boardgame[cursorY][cursorX+1:])
+	gra.Boardgame[ctr.CursorY] = fmt.Sprintf("%v%v%v", gra.Boardgame[ctr.CursorY][:ctr.CursorX], gra.CursorInv, gra.Boardgame[ctr.CursorY][ctr.CursorX+1:])
 	clearScreen()
 	renderBoardgame()
 }
@@ -160,20 +145,20 @@ func render() {
 	for {
 		renderBoardgame()
 		time.Sleep(time.Millisecond * BLINK_TIME)
-		boardgame[cursorY] = fmt.Sprintf("%v%v%v", boardgame[cursorY][:cursorX], cursor, boardgame[cursorY][cursorX+1:])
+		gra.Boardgame[ctr.CursorY] = fmt.Sprintf("%v%v%v", gra.Boardgame[ctr.CursorY][:ctr.CursorX], gra.Cursor, gra.Boardgame[ctr.CursorY][ctr.CursorX+1:])
 		clearScreen()
 
 		renderBoardgame()
 		time.Sleep(time.Millisecond * BLINK_TIME)
-		boardgame[cursorY] = fmt.Sprintf("%v%v%v", boardgame[cursorY][:cursorX], cursorEmpty, boardgame[cursorY][cursorX+1:])
+		gra.Boardgame[ctr.CursorY] = fmt.Sprintf("%v%v%v", gra.Boardgame[ctr.CursorY][:ctr.CursorX], gra.CursorInv, gra.Boardgame[ctr.CursorY][ctr.CursorX+1:])
 		clearScreen()
 	}
 }
 
 func renderBoardgame() {
-	for i := 0; i < len(boardgame); i++ {
-		fmt.Print(LEFT_MARGIN)
-		fmt.Println(boardgame[i])
+	for i := 0; i < len(gra.Boardgame); i++ {
+		fmt.Print(gra.MARGIN)
+		fmt.Println(gra.Boardgame[i])
 	}
 	fmt.Println(winnerIs)
 }
