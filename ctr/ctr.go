@@ -76,8 +76,7 @@ func changeTurn() { // Cambio el mensaje de a quien le toca jugar por no haberse
 	}
 }
 
-func BlinkCursor() { // CAMBIAR NOMBRE A BlinkCursor???
-
+func BlinkCursor() {
 	for {
 		if Message == TURN_PLAYER {
 			ShowCursor(CursorY)
@@ -85,7 +84,6 @@ func BlinkCursor() { // CAMBIAR NOMBRE A BlinkCursor???
 		}
 		hideCursor()
 		time.Sleep(time.Millisecond * BLINK_TIME)
-
 	}
 }
 
@@ -166,7 +164,6 @@ func computerElection() {
 		}
 
 		// fmt.Println(y, x)
-		// ENTRA A ESTE IF SIN QUE DEBA HACERLO
 		if string(BoardGame[y][x]) == " " {
 			lastCompX = strconv.Itoa(x)
 			lastCompY = strconv.Itoa(y)
