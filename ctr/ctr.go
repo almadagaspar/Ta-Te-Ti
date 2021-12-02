@@ -25,7 +25,8 @@ const MARGIN = "            "
 const PLAYER = "O"
 const COMPUTER = "X"
 
-var Cursor = "*"
+const CURSOR = "*"
+
 var CursorY = 2
 var CursorX = 4
 
@@ -79,33 +80,25 @@ func changeTurn() { // Cambio el mensaje de a quien le toca jugar por no haberse
 func BlinkCursor() {
 	for {
 		if Message == TURN_PLAYER {
-			ShowCursor(CursorY)
+			ShowCursor(true)
 			time.Sleep(time.Millisecond * BLINK_TIME)
 		}
-		hideCursor()
+		ShowCursor(false)
 		time.Sleep(time.Millisecond * BLINK_TIME)
 	}
 }
 
-func ShowCursor(y int) { // Renderizo el tablero de juego junto con información del juego.
+func ShowCursor(show bool) { // Renderizo el tablero de juego junto con información del juego.
 	ClearScreen()
-	for i := 0; i < len(BoardGame); i++ {
+	for y := 0; y < len(BoardGame); y++ {
 		fmt.Print(MARGIN)
-		if i == y {
-			rowWithCursor := fmt.Sprintf("%s%s%s", BoardGame[CursorY][:CursorX], Cursor, BoardGame[CursorY][CursorX+1:])
+		// Si es el turno del jugador, y se esta por renderizar la fila donde esta el cursor, y el cursor debe mostarse, renderizo el tablero con el cursor, si no, sin él.
+		if Message == TURN_PLAYER && y == CursorY && show {
+			rowWithCursor := fmt.Sprintf("%s%s%s", BoardGame[CursorY][:CursorX], CURSOR, BoardGame[CursorY][CursorX+1:])
 			fmt.Println(rowWithCursor)
 		} else {
-			fmt.Println(BoardGame[i])
+			fmt.Println(BoardGame[y])
 		}
-	}
-	fmt.Println(Message, lastCompY, lastCompX)
-}
-
-func hideCursor() {
-	ClearScreen()
-	for i := 0; i < len(BoardGame); i++ {
-		fmt.Print(MARGIN)
-		fmt.Println(BoardGame[i])
 	}
 	fmt.Println(Message, lastCompY, lastCompX)
 }
@@ -116,7 +109,7 @@ func ClearScreen() {
 		cmd.Stdout = os.Stdout
 		cmd.Run()
 	} else {
-		cmd := exec.Command("clear") // linux or mac
+		cmd := exec.Command("clear") // linux o mac
 		cmd.Stdout = os.Stdout
 		cmd.Run()
 	}
@@ -169,7 +162,7 @@ func computerElection() {
 			lastCompY = strconv.Itoa(y)
 			BoardGame[y] = fmt.Sprintf("%s%s%s", BoardGame[y][:x], COMPUTER, BoardGame[y][x+1:])
 			ClearScreen()
-			ShowCursor(CursorY)
+			ShowCursor(true)
 			computerWinControl(y, x)
 			break
 		}

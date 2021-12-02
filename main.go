@@ -41,22 +41,22 @@ func main() {
 			case keyboard.KeyArrowRight:
 				if ctr.CursorX < 8 { // Impido que el cursor se salga del tablero.
 					ctr.CursorX = ctr.CursorX + 4 // Modifico la posición que tendrá el cursor segun la tecla presionada.
-					ctr.ShowCursor(ctr.CursorY)   // Muestro el cursor en la nueva posición.
+					ctr.ShowCursor(true)          // Muestro inmediatamente el cursor en la nueva posición.
 				}
 			case keyboard.KeyArrowLeft:
 				if ctr.CursorX > 0 {
 					ctr.CursorX = ctr.CursorX - 4
-					ctr.ShowCursor(ctr.CursorY)
+					ctr.ShowCursor(true)
 				}
 			case keyboard.KeyArrowDown:
 				if ctr.CursorY < 4 {
 					ctr.CursorY = ctr.CursorY + 2
-					ctr.ShowCursor(ctr.CursorY)
+					ctr.ShowCursor(true)
 				}
 			case keyboard.KeyArrowUp:
 				if ctr.CursorY > 0 {
 					ctr.CursorY = ctr.CursorY - 2
-					ctr.ShowCursor(ctr.CursorY)
+					ctr.ShowCursor(true)
 				}
 			case keyboard.KeySpace: // Si el jugador quiere poner su pieza y si esta vacio el lugar que ocupa el cursor, la pieza del jugador es colocada.
 				if string(ctr.BoardGame[ctr.CursorY][ctr.CursorX]) == " " {
