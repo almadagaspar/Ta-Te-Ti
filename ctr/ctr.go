@@ -8,12 +8,11 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 )
 
-var BoardGame = []string{
+var BoardGameInitial = []string{
 	"  |   |  ",
 	"──┼───┼──",
 	"  |   |  ",
@@ -21,23 +20,135 @@ var BoardGame = []string{
 	"  |   |  ",
 }
 
-const MARGIN = "            "
+var BoardGame = []string{"", "", "", "", ""}
+
+const MARGIN = "                "
 const PLAYER = "O"
 const COMPUTER = "X"
-
+const EMPTY = " "
 const CURSOR = "*"
+const TURN_PLAYER = "Turn: Player"
+const TURN_COMPUTER = "Turn: Computer"
+const DRAW = "It's a Draw!"
+const PLAY_AGAIN = "Play Again? (y/n)"
+const COMPUTER_THINK_TIME = 900
 
 var CursorY = 2
 var CursorX = 4
+var Status = TURN_PLAYER
+var remainingTurns = 8 // Maxima cantidad de veces que se puede cambiar de turno antes de un empate.
+var playerWins = 0
+var computerWins = 0
 
-const TURN_PLAYER = "Turn: Player"
-const TURN_COMPUTER = "Turn: Computer"
+// var lastCompY = ""
+// var lastCompX = ""
 
-var Message = TURN_PLAYER
-var lastCompY = ""
-var lastCompX = ""
+const BLINK_TIME = 250
 
-const BLINK_TIME = 300
+func BlinkCursor() {
+	ResetBoardGame()
+	rand.Seed(time.Now().UnixNano()) // Preparo la variable rand para generar posteriormente un número random
+	for {
+		if Status == TURN_PLAYER {
+			ShowCursor(true)
+			time.Sleep(time.Millisecond * BLINK_TIME)
+		}
+		ShowCursor(false)
+		time.Sleep(time.Millisecond * BLINK_TIME)
+	}
+}
+
+func ShowCursor(show bool) { // Renderizo el tablero de juego junto con información del juego.
+	ClearTerminal()
+	fmt.Println("Player Wins:  ", playerWins)
+	fmt.Println("Computer Wins:", computerWins)
+	fmt.Println()
+	for y := 0; y < len(BoardGame); y++ {
+		fmt.Print(MARGIN)
+		// Si es el turno del jugador, y se esta por renderizar la fila donde esta el cursor, y el cursor debe mostarse, renderizar esa fila con el cursor
+		if Status == TURN_PLAYER && y == CursorY && show {
+			rowWithCursor := fmt.Sprintf("%s%s%s", BoardGame[CursorY][:CursorX], CURSOR, BoardGame[CursorY][CursorX+1:])
+			fmt.Println(rowWithCursor)
+		} else {
+			fmt.Println(BoardGame[y]) // Renderizar sin el cursor.
+		}
+	}
+	fmt.Println()
+
+	fmt.Println(Status)
+	if Status != TURN_PLAYER && Status != TURN_COMPUTER { // Si alguien ganó, o si hubo empate
+		fmt.Println(PLAY_AGAIN)
+	}
+
+}
+
+func ClearTerminal() {
+	if strings.Contains(runtime.GOOS, "windows") { // Limpia la terminal en Windows
+		cmd := exec.Command("cmd", "/c", "cls")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	} else {
+		cmd := exec.Command("clear") // Limpiar la terminal en Linux o Mac
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	}
+}
+
+func HideTerminalCursor(option string) { // Oculto el cursor de la terminal
+	cmd := exec.Command("tput", option)
+	cmd.Stdout = os.Stdout
+	cmd.Run()
+}
+
+func showWinner(winner string) { // Muestro un mensaje indicando quen gano la partida.
+	if winner == PLAYER {
+		Status = "PLAYER WINS!!"
+		playerWins++
+	} else {
+		Status = "COMPUTER WINS!!"
+		computerWins++
+	}
+}
+
+func computerElection() {
+	time.Sleep(time.Millisecond * COMPUTER_THINK_TIME) // Genero una demora para simular el pensar de la computadora
+
+	var y int
+	var x int
+
+	for {
+
+		var randNumY = rand.Intn(3)
+		var randNumX = rand.Intn(3)
+
+		if randNumY == 0 {
+			y = 0
+		} else if randNumY == 1 {
+			y = 2
+		} else if randNumY == 2 {
+			y = 4
+		}
+
+		if randNumX == 0 {
+			x = 0
+		} else if randNumX == 1 {
+			x = 4
+		} else if randNumX == 2 {
+			x = 8
+		}
+
+		// fmt.Println(y, x)
+		if string(BoardGame[y][x]) == EMPTY {
+			// lastCompX = strconv.Itoa(x)
+			// lastCompY = strconv.Itoa(y)
+			BoardGame[y] = fmt.Sprintf("%s%s%s", BoardGame[y][:x], COMPUTER, BoardGame[y][x+1:])
+			computerWinControl(y, x)
+			ShowCursor(true)
+			break
+		}
+
+	}
+}
 
 func PlayerWinControl() { // Controlo si el Jugador o la Computadora (PLAYER = PLAYER o COMPUTER) ganó tras su ultima jugada.
 
@@ -65,109 +176,8 @@ func PlayerWinControl() { // Controlo si el Jugador o la Computadora (PLAYER = P
 		showWinner(PLAYER)
 		return
 	}
+
 	changeTurn()
-}
-
-func changeTurn() { // Cambio el mensaje de a quien le toca jugar por no haberse jenerado un ganador en el anterior turno
-	if Message == TURN_PLAYER {
-		Message = TURN_COMPUTER
-		computerElection()
-	} else {
-		Message = TURN_PLAYER
-	}
-}
-
-func BlinkCursor() {
-	for {
-		if Message == TURN_PLAYER {
-			ShowCursor(true)
-			time.Sleep(time.Millisecond * BLINK_TIME)
-		}
-		ShowCursor(false)
-		time.Sleep(time.Millisecond * BLINK_TIME)
-	}
-}
-
-func ShowCursor(show bool) { // Renderizo el tablero de juego junto con información del juego.
-	ClearScreen()
-	for y := 0; y < len(BoardGame); y++ {
-		fmt.Print(MARGIN)
-		// Si es el turno del jugador, y se esta por renderizar la fila donde esta el cursor, y el cursor debe mostarse, renderizo el tablero con el cursor, si no, sin él.
-		if Message == TURN_PLAYER && y == CursorY && show {
-			rowWithCursor := fmt.Sprintf("%s%s%s", BoardGame[CursorY][:CursorX], CURSOR, BoardGame[CursorY][CursorX+1:])
-			fmt.Println(rowWithCursor)
-		} else {
-			fmt.Println(BoardGame[y])
-		}
-	}
-	fmt.Println(Message, lastCompY, lastCompX)
-}
-
-func ClearScreen() {
-	if strings.Contains(runtime.GOOS, "windows") { // windows
-		cmd := exec.Command("cmd", "/c", "cls")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
-	} else {
-		cmd := exec.Command("clear") // linux o mac
-		cmd.Stdout = os.Stdout
-		cmd.Run()
-	}
-}
-
-func HideTerminalCursor(option string) { // Oculto el cursor de la terminal
-	cmd := exec.Command("tput", option)
-	cmd.Stdout = os.Stdout
-	cmd.Run()
-}
-
-func showWinner(winner string) { // Muestro un mensaje indicando quen gano la partida.
-	if winner == PLAYER {
-		Message = "Player Wins!!"
-	} else {
-		Message = "Computer Wins!!"
-	}
-}
-
-func computerElection() {
-	time.Sleep(time.Millisecond * BLINK_TIME * 5) // Genero una demora para simular el pensar de la computadora
-
-	var y int
-	var x int
-
-	for {
-
-		var randNumY = rand.Intn(3)
-		var randNumX = rand.Intn(3)
-
-		if randNumY == 0 {
-			y = 0
-		} else if randNumY == 1 {
-			y = 2
-		} else if randNumY == 2 {
-			y = 4
-		}
-
-		if randNumX == 0 {
-			x = 0
-		} else if randNumX == 1 {
-			x = 4
-		} else if randNumX == 2 {
-			x = 8
-		}
-
-		// fmt.Println(y, x)
-		if string(BoardGame[y][x]) == " " {
-			lastCompX = strconv.Itoa(x)
-			lastCompY = strconv.Itoa(y)
-			BoardGame[y] = fmt.Sprintf("%s%s%s", BoardGame[y][:x], COMPUTER, BoardGame[y][x+1:])
-			ClearScreen()
-			ShowCursor(true)
-			computerWinControl(y, x)
-			break
-		}
-
-	}
 }
 
 func computerWinControl(y, x int) {
@@ -192,7 +202,25 @@ func computerWinControl(y, x int) {
 		showWinner(COMPUTER)
 		return
 	}
-
 	changeTurn()
+}
 
+func changeTurn() { // Cambio el mensaje de a quien le toca jugar por no haberse jenerado un ganador en el anterior turno
+	if remainingTurns == 0 {
+		Status = DRAW
+	} else if Status == TURN_PLAYER {
+		Status = TURN_COMPUTER
+		go computerElection() // Ejecuto esta funcion como una co-routine solo para que no aparezcan en la terminal las posibles teclas presionadas durante el turno de la computadora.
+	} else {
+		Status = TURN_PLAYER
+	}
+	remainingTurns--
+}
+
+func ResetBoardGame() {
+	copy(BoardGame, BoardGameInitial)
+	CursorY = 2
+	CursorX = 4
+	Status = TURN_PLAYER
+	remainingTurns = 8
 }

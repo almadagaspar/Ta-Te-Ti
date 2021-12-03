@@ -20,7 +20,7 @@ func main() {
 		_ = keyboard.Close()
 	}()
 
-	ctr.ClearScreen()               // Limpio la terminal
+	ctr.ClearTerminal()             // Limpio la terminal
 	ctr.HideTerminalCursor("civis") // Desactivo el cursor de la terminal
 	go ctr.BlinkCursor()            // Ejecuto como una co-routina el parpadeo del cursor del juego
 
@@ -31,12 +31,19 @@ func main() {
 			log.Fatal(err)
 		}
 
-		// Detectamos si el usuario presiono la tecla para salir del programa:
-		if key == keyboard.KeyEsc {
+		if key == keyboard.KeyEsc { // Detectamos si el usuario presiono la tecla para salir del programa:
 			break
 		}
 
-		if ctr.Message == ctr.TURN_PLAYER {
+		if ctr.Status != ctr.TURN_PLAYER && ctr.Status != ctr.TURN_COMPUTER {
+			if string(char) == "n" || string(char) == "N" {
+				break
+			} else if string(char) == "y" || string(char) == "Y" {
+				ctr.ResetBoardGame()
+			}
+		}
+
+		if ctr.Status == ctr.TURN_PLAYER { // Solo quiero que se mueva el cursor si es el turno del jugador.
 			switch key { // Realizo una acción segun la tecla presionada por el jugador.
 			case keyboard.KeyArrowRight:
 				if ctr.CursorX < 8 { // Impido que el cursor se salga del tablero.
@@ -59,13 +66,14 @@ func main() {
 					ctr.ShowCursor(true)
 				}
 			case keyboard.KeySpace: // Si el jugador quiere poner su pieza y si esta vacio el lugar que ocupa el cursor, la pieza del jugador es colocada.
-				if string(ctr.BoardGame[ctr.CursorY][ctr.CursorX]) == " " {
+				if string(ctr.BoardGame[ctr.CursorY][ctr.CursorX]) == ctr.EMPTY {
 					ctr.BoardGame[ctr.CursorY] = fmt.Sprintf("%s%s%s", ctr.BoardGame[ctr.CursorY][:ctr.CursorX], ctr.PLAYER, ctr.BoardGame[ctr.CursorY][ctr.CursorX+1:])
 					ctr.PlayerWinControl()
 				}
 			default:
-				fmt.Print(string(char))
+
 			}
 		}
+
 	}
 }
