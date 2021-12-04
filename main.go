@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-
 	err := keyboard.Open() // Activo la funcionalidad que lee las teclas presionadas.
 	if err != nil {
 		log.Fatal(err)
@@ -68,7 +67,11 @@ func main() {
 			case keyboard.KeySpace: // Si el jugador quiere poner su pieza y si esta vacio el lugar que ocupa el cursor, la pieza del jugador es colocada.
 				if string(ctr.BoardGame[ctr.CursorY][ctr.CursorX]) == ctr.EMPTY {
 					ctr.BoardGame[ctr.CursorY] = fmt.Sprintf("%s%s%s", ctr.BoardGame[ctr.CursorY][:ctr.CursorX], ctr.PLAYER, ctr.BoardGame[ctr.CursorY][ctr.CursorX+1:])
-					ctr.PlayerWinControl()
+					if !ctr.WinControl(ctr.PLAYER, ctr.CursorY, ctr.CursorX, ctr.BoardGame) { // Si con la ultima ficha que puso el jugador NO gano...
+						ctr.ChangeTurn()
+					} else {
+						ctr.ShowWinner(ctr.PLAYER)
+					}
 				}
 			default:
 

@@ -20,8 +20,21 @@ var BoardGameInitial = []string{
 	"  |   |  ",
 }
 
+//
+//    0 | 4 | 8   ─► x index
+//    ──┼───┼──
+//    2 |   |
+//    ──┼───┼──
+//    4 |   |
+//
+//    |
+//    ▼
+//
+//    y index
+//
+
 var BoardGame = []string{"", "", "", "", ""}     // Tablero de juego para el desarrollo de cada partida.
-var BoardGameTest = []string{"", "", "", "", ""} // Tablero de juego para testear si la computadora puede ganar al poner su proximaficha.
+var BoardGameTest = []string{"", "", "", "", ""} // Tablero de juego para testear si la computadora o el jugador puede ganar al poner su proxima ficha.
 
 const MARGIN = "                "
 const PLAYER = "O"
@@ -47,11 +60,8 @@ var difficuty = HARD
 
 // var difficuty = EASY
 
-var next_y_1 int // Posicion de y en una conveniente futura jugada
-var next_x_1 int // Posicion de x en una conveniente futura jugada
-
-// var lastCompY = ""
-// var lastCompX = ""
+var next_y_1 int = -1 // Posicion de y en una conveniente futura jugada
+var next_x_1 int = -1 // Posicion de x en una conveniente futura jugada
 
 const BLINK_TIME = 250
 
@@ -125,7 +135,7 @@ func HideTerminalCursor(option string) { // Oculto el cursor de la terminal
 //
 //
 
-func showWinner(winner string) { // Muestro un mensaje indicando quen gano la partida.
+func ShowWinner(winner string) { // Muestro un mensaje indicando quen gano la partida.
 	if winner == PLAYER {
 		Status = "PLAYER WINS!!"
 		playerWins++
@@ -166,13 +176,12 @@ func computerElection() {
 				x = 8
 			}
 
-			// fmt.Println(y, x)
 			if string(BoardGame[y][x]) == EMPTY {
-				// lastCompX = strconv.Itoa(x)
-				// lastCompY = strconv.Itoa(y)
 				BoardGame[y] = fmt.Sprintf("%s%s%s", BoardGame[y][:x], COMPUTER, BoardGame[y][x+1:])
-				if !computerWinControl(y, x, BoardGame) { // Si con la ultima pieza que puso la computadora NO ganó la partida...
-					changeTurn()
+				if !WinControl(COMPUTER, y, x, BoardGame) { // Si con la ultima pieza que puso la computadora NO ganó la partida...
+					ChangeTurn()
+				} else {
+					ShowWinner(COMPUTER)
 				}
 				break
 			}
@@ -182,7 +191,7 @@ func computerElection() {
 		switch remainingTurns {
 		case 8: // Primer turno de la computadora, pone su ficha en el centro.
 			BoardGame[2] = fmt.Sprintf("%s%s%s", BoardGame[2][:4], COMPUTER, BoardGame[2][5:])
-			changeTurn()
+			ChangeTurn()
 			return
 		case 6: // Segundo turno de la computadora
 			if string(BoardGame[0][4]) == PLAYER { // Si el jugador puso su primer ficha en la primer fila y segunda columna...
@@ -201,45 +210,48 @@ func computerElection() {
 				BoardGame[4] = fmt.Sprintf("%s%s", BoardGame[4][:8], COMPUTER) // ...la cumputadora pone su segunda ficha en la esquina inferior derecha
 				next_y_1 = 0
 				next_x_1 = 8
+			} else if string(BoardGame[0][0]) == PLAYER { // Si el jugador puso su primer ficha en la esquina superior izquierda...
+				BoardGame[4] = fmt.Sprintf("%s%s", BoardGame[4][:8], COMPUTER) // ...la cumputadora pone su segunda ficha en la esquina inferior derecha
+				// next_y_1 = 0
+				// next_x_1 = 8
+			} else if string(BoardGame[0][8]) == PLAYER { // Si el jugador puso su primer ficha en la esquina superior derecha...
+				BoardGame[4] = fmt.Sprintf("%s%s", COMPUTER, BoardGame[4][1:]) // ...la cumputadora pone su segunda ficha en la esquina inferior izquierda
+				// next_y_1 = 0
+				// next_x_1 = 8
+			} else if string(BoardGame[4][0]) == PLAYER { // Si el jugador puso su primer ficha en la esquina inferior izquierda...
+				BoardGame[0] = fmt.Sprintf("%s%s", BoardGame[0][:8], COMPUTER) // ...la cumputadora pone su segunda ficha en la esquina superior derecha
+				// next_y_1 = 0
+				// next_x_1 = 8
+			} else if string(BoardGame[4][8]) == PLAYER { // Si el jugador puso su primer ficha en la esquina inferior derecha...
+				BoardGame[0] = fmt.Sprintf("%s%s", COMPUTER, BoardGame[0][1:]) // ...la cumputadora pone su segunda ficha en la esquina superior izquierda
+				// next_y_1 = 0
+				// next_x_1 = 8
 			}
-			changeTurn()
+			ChangeTurn()
 		case 4: // Tercer turno de la computadora. Ya puede intentar ganar.
-			foundVictory := false // ESTA LINEA JUNTO CON LOS SIGUIENTES DOS FOR, DEBERIAN IR EN UNA FUNCION...!!!!!!!!!!!
-			for y := 0; y <= 4 && !foundVictory; y = y + 2 {
-				for x := 0; x <= 8 && !foundVictory; x = x + 4 {
-					copy(BoardGameTest, BoardGame)
-					if string(BoardGameTest[y][x]) == EMPTY {
-						BoardGameTest[y] = fmt.Sprintf("%s%s%s", BoardGameTest[y][:x], COMPUTER, BoardGameTest[y][x+1:])
-						if computerWinControl(y, x, BoardGameTest) { // Si con la ultima pieza que se SIMULO poner la computadora ganaría la partida...
-							foundVictory = true
-							BoardGame[y] = fmt.Sprintf("%s%s%s", BoardGame[y][:x], COMPUTER, BoardGame[y][x+1:])
-						}
-					}
+			if next_y_1 != -1 { // Si el jugador NO puso su primer ficha en una esquina...
+				if !searchForBestPlay(COMPUTER) { // Si la computadora NO encontro una jugada que le de la victoria....
+					BoardGame[next_y_1] = fmt.Sprintf("%s%s%s", BoardGame[next_y_1][:next_x_1], COMPUTER, BoardGame[next_y_1][next_x_1+1:]) // Ubica su proxima ficha en el mejor lugar predefinido, para intentar ganar en el proximo turno.
+					ChangeTurn()
+				} else {
+					ShowWinner(COMPUTER)
 				}
-			}
-			if !foundVictory {
-				BoardGame[next_y_1] = fmt.Sprintf("%s%s%s", BoardGame[next_y_1][:next_x_1], COMPUTER, BoardGame[next_y_1][next_x_1+1:])
-				changeTurn()
+			} else { // Si el jugador puso su primer ficha en una esquina, la computadora busca si el jugador puede ganar en su proximo turno, y lo impide si es asi.
+				searchForBestPlay(PLAYER)
+				ChangeTurn()
 			}
 		case 2:
-			foundVictory := false // ESTA LINEA JUNTO CON LOS SIGUIENTES DOS FOR, DEBERIAN IR EN UNA FUNCION...!!!!!!!!!!!
-			for y := 0; y <= 4 && !foundVictory; y = y + 2 {
-				for x := 0; x <= 8 && !foundVictory; x = x + 4 {
-					copy(BoardGameTest, BoardGame)
-					if string(BoardGameTest[y][x]) == EMPTY {
-						BoardGameTest[y] = fmt.Sprintf("%s%s%s", BoardGameTest[y][:x], COMPUTER, BoardGameTest[y][x+1:])
-						if computerWinControl(y, x, BoardGameTest) { // Si con la ultima pieza que se SIMULO poner la computadora ganaría la partida...
-							foundVictory = true
-							BoardGame[y] = fmt.Sprintf("%s%s%s", BoardGame[y][:x], COMPUTER, BoardGame[y][x+1:])
-						}
-					}
-				}
+			if !searchForBestPlay(COMPUTER) {
+				// LAS VARIABLES next DEBEN LLEGAR A ESTA INSTANCIA CON LOS VALORES CORRESPONDIENTES !!!!!!!!!!!!!!
+				// BoardGame[next_y_1] = fmt.Sprintf("%s%s%s", BoardGame[next_y_1][:next_x_1], COMPUTER, BoardGame[next_y_1][next_x_1+1:])
+				ChangeTurn()
+			} else {
+				ShowWinner(COMPUTER)
 			}
 		default:
 		}
 	}
 
-	// Si el jugador puso su primer ficha en una esquina, la cumputadora pone su segunda ficha en la esquina opuesta a la ficha del jugador
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }
@@ -247,58 +259,53 @@ func computerElection() {
 //
 //
 
-func PlayerWinControl() { // Controlo si el Jugador o la Computadora (PLAYER = PLAYER o COMPUTER) ganó tras su ultima jugada.
+func searchForBestPlay(CorP string) bool { // CorP = COMPUTER o PLAYER
+	foundVictory := false
+	for y := 0; y <= 4 && !foundVictory; y = y + 2 {
+		for x := 0; x <= 8 && !foundVictory; x = x + 4 {
+			copy(BoardGameTest, BoardGame)
+			if string(BoardGameTest[y][x]) == EMPTY {
+				BoardGameTest[y] = fmt.Sprintf("%s%s%s", BoardGameTest[y][:x], CorP, BoardGameTest[y][x+1:])
+				if CorP == PLAYER {
+					if WinControl(PLAYER, y, x, BoardGameTest) { // Si con la ultima pieza que se SIMULO poner la computadora ganaría la partida...
+						foundVictory = true
+						BoardGame[y] = fmt.Sprintf("%s%s%s", BoardGame[y][:x], COMPUTER, BoardGame[y][x+1:])
+					}
+				}
+				if CorP == COMPUTER {
+					if WinControl(COMPUTER, y, x, BoardGameTest) { // Si con la ultima pieza que se SIMULO poner la computadora ganaría la partida...
+						foundVictory = true
+						BoardGame[y] = fmt.Sprintf("%s%s%s", BoardGame[y][:x], COMPUTER, BoardGame[y][x+1:])
+					}
+				}
+			}
+		}
+	}
+	return foundVictory
+}
 
-	// Si en la FILA en la que voy a poner una pieza ya hay dos piezas puesas, se gana la partida.
-	if strings.Count(BoardGame[CursorY], PLAYER) == 3 {
-		showWinner(PLAYER)
-		return
+// PlayerWinControl y computerWinControl PODRIAN FUCIONARSE EN UNA UNICA FUNCIÓN AGREGANDO UN PARAMETRO Who... !!!!!!!!!!!!!!!!
+//
+
+func WinControl(CorP string, y int, x int, boardGame []string) bool { // CorP = COMPUTER o PLAYER
+	if strings.Count(boardGame[y], CorP) == 3 {
+		return true
 	}
 
 	//  Si en la COLUMNA en la que voy a poner una pieza ya hay dos piezas puestas, se gana la partida.
 	count := 0
-	for y := 0; y <= len(BoardGame); y = y + 2 {
-		if string(BoardGame[y][CursorX]) == PLAYER {
+	for y := 0; y <= len(boardGame); y = y + 2 {
+		if string(boardGame[y][x]) == CorP {
 			count++
 		}
 	}
 	if count == 3 {
-		showWinner(PLAYER)
-		return
+		return true
 	}
 
 	// Si en la DIAGONALES \ o / hay tres piezas del jugador puesas, se gana la partida.
-	if (string(BoardGame[0][0]) == PLAYER && string(BoardGame[2][4]) == PLAYER && string(BoardGame[4][8]) == PLAYER) ||
-		(string(BoardGame[0][8]) == PLAYER && string(BoardGame[2][4]) == PLAYER && string(BoardGame[4][0]) == PLAYER) {
-		showWinner(PLAYER)
-		return
-	}
-	changeTurn()
-}
-
-//
-//
-
-func computerWinControl(y int, x int, boardGame []string) bool {
-	if strings.Count(boardGame[y], COMPUTER) == 3 {
-		showWinner(COMPUTER)
-		return true
-	}
-
-	count := 0
-	for i := 0; i <= len(boardGame); i = i + 2 {
-		if string(boardGame[i][x]) == COMPUTER {
-			count++
-		}
-	}
-	if count == 3 {
-		showWinner(COMPUTER)
-		return true
-	}
-
-	if (string(boardGame[0][0]) == COMPUTER && string(boardGame[2][4]) == COMPUTER && string(boardGame[4][8]) == COMPUTER) || // Diagonal \
-		(string(boardGame[0][8]) == COMPUTER && string(boardGame[2][4]) == COMPUTER && string(boardGame[4][0]) == COMPUTER) { // Diagonal /
-		showWinner(COMPUTER)
+	if (string(boardGame[0][0]) == CorP && string(boardGame[2][4]) == CorP && string(boardGame[4][8]) == CorP) || // Diagonal \
+		(string(boardGame[0][8]) == CorP && string(boardGame[2][4]) == CorP && string(boardGame[4][0]) == CorP) { // Diagonal /
 		return true
 	}
 	return false
@@ -307,7 +314,7 @@ func computerWinControl(y int, x int, boardGame []string) bool {
 //
 //
 
-func changeTurn() { // Cambio el mensaje de a quien le toca jugar por no haberse jenerado un ganador en el anterior turno
+func ChangeTurn() { // Cambio el mensaje de a quien le toca jugar por no haberse jenerado un ganador en el anterior turno
 	if remainingTurns == 0 {
 		Status = DRAW
 	} else if Status == TURN_PLAYER {
@@ -331,8 +338,10 @@ func ResetBoardGame() {
 		CursorY = 2
 	} else { // Si la dificultad es HARD
 		CursorY = 0
+		next_y_1 = -1
+		next_x_1 = -1
 		Status = TURN_COMPUTER
-		go computerElection()
+		go computerElection() // Ejecuto esta funcion como una co-routine solo para que no aparezcan en la terminal las posibles teclas presionadas durante el turno de la computadora.
 	}
 	remainingTurns = 8
 }
