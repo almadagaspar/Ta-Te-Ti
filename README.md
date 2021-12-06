@@ -5,19 +5,37 @@
 <br />
 Steps to run this project:
 <ul>
-    <li>Install Go following the official instructions.</li>
+    <li>Install Go following the official instructions: https://go.dev/doc/install</li>
     <li>Clone this repository on your local disk.</li>
-    <li>Open a terminal, and move to this repository.</li>
+    <li>Open a terminal, and then use it to go to the directory where this repository located.</li>
     <li>Enter 'go run main.go' on your terminal.</li>
 </ul>
 <br />
 <br />
+
+
+## Menu screen:
+<br />
+<img width='900px' src='./images/menu.jpeg' alt=''/>
+<br />
+<br />
+<br />
+
+## Game screen:
+<img width='900px' src='./images/game.jpeg' alt=''/>
 <br />
 <br />
 <br />
 <br />
 
-## This Go project leads me to learn and practice the following: 
+## In this Go project, I made use of the following: 
 <ul>
-    <li></li>
+    <li>Use a external package to detect keys pressed on the keyboard.</li>
+    <li>Check for errors.</li>
+    <li>Go routines.</li>
+    <li>String interpolation.</li>
+    <li>Generate random numbers.</li>
+    <li>Send information between packages.</li>
+    <li>Use functions with multiple parameters.</li>
+    <li>Modify slices.</li>
 </ul>
