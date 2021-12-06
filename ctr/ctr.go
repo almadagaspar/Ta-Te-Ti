@@ -1,6 +1,4 @@
-package ctr
-
-// Este package contiene los controladores del juego.
+package ctr // Controlles
 
 import (
 	"fmt"
@@ -37,78 +35,82 @@ var BoardGameInitial = []string{
 var BoardGame = []string{"", "", "", "", ""}     // Tablero de juego para el desarrollo de cada partida.
 var BoardGameTest = []string{"", "", "", "", ""} // Tablero de juego para testear si la computadora o el jugador puede ganar al poner su proxima ficha.
 
-const MARGIN = "                "
 const PLAYER = "O"
 const COMPUTER = "X"
 const EMPTY = " "
 const CURSOR = "*"
-const TURN_PLAYER = "Turn: Player"
-const TURN_COMPUTER = "Turn: Computer"
-const DRAW = "It's a Draw!"
 const PLAY_AGAIN = "Play Again? (y/n)"
 const COMPUTER_THINK_TIME = 900
 const EASY = "EASY"
 const HARD = "HARD"
 const BLINK_TIME = 250
 
+// Estados en los que puede estar el juego
+const TURN_PLAYER = "Turn: Player"
+const TURN_COMPUTER = "Turn: Computer"
+const DRAW = "It's a Draw!"
+const MENU = "Menu"
+
+var Status = MENU
 var CursorY = 2
 var CursorX = 4
-var Status = TURN_PLAYER
 var remainingTurns = 8 // Turnos restantes antes de un empate.
-var playerWins = 0
-var computerWins = 0
-var draws = 0
+var PlayerWins = 0
+var ComputerWins = 0
+var Draws = 0
 
-var difficuty = HARD
+var Difficuty = ""
 
-// var difficuty = EASY
+var next_y_1 int = -1 // La posición de y en una conveniente futura jugada para la computadora.
+var next_x_1 int = -1 // La posición de x en una conveniente futura jugada para la computadora.
 
-var next_y_1 int = -1 // La posición de y en una conveniente futura jugada
-var next_x_1 int = -1 // La posición de x en una conveniente futura jugada
-
-//
-//
-
-func BlinkCursor() {
+func RunGame() {
 	ResetBoardGame()
 	rand.Seed(time.Now().UnixNano()) // Preparo la variable rand para generar posteriormente un número random
 	for {
 		if Status == TURN_PLAYER {
-			ShowCursor(true)
+			RenderGame(true)
 			time.Sleep(time.Millisecond * BLINK_TIME)
 		}
-		ShowCursor(false)
+		RenderGame(false)
 		time.Sleep(time.Millisecond * BLINK_TIME)
+		if Status == MENU {
+			break
+		}
 	}
 }
 
 //
 //
 
-func ShowCursor(show bool) { // Renderizo el tablero de juego junto con información del juego.
+func RenderGame(show bool) { // Renderizo el tablero de juego junto con información del juego.
 	ClearTerminal()
+	fmt.Println("============================================================================================")
+	fmt.Println()
 	fmt.Println("Controls:      Use ARROWS KEYS to move the cursor, and the SPACE BAR to select a place.")
-	fmt.Println("Difficulty:   ", difficuty)
 	fmt.Println()
-	fmt.Println("Player Wins:  ", playerWins)
-	fmt.Println("Computer Wins:", computerWins)
-	fmt.Println("Draws:  ", draws)
-	fmt.Println()
+	fmt.Println("Difficulty:   ", Difficuty)
+	fmt.Println("Player Wins:  ", PlayerWins)
+	fmt.Println("Computer Wins:", ComputerWins)
+	fmt.Println("Draws:  ", Draws)
 	for y := 0; y < len(BoardGame); y++ {
-		fmt.Print(MARGIN)
 		// Si es el turno del jugador, y se esta por renderizar la fila donde esta el cursor, y el cursor debe mostarse, renderizar esa fila con el cursor
 		if Status == TURN_PLAYER && y == CursorY && show {
 			rowWithCursor := fmt.Sprintf("%s%s%s", BoardGame[CursorY][:CursorX], CURSOR, BoardGame[CursorY][CursorX+1:])
-			fmt.Println(rowWithCursor)
+			fmt.Println("\t\t\t\t", rowWithCursor)
 		} else {
-			fmt.Println(BoardGame[y]) // Renderizar sin el cursor.
+			fmt.Println("\t\t\t\t", BoardGame[y]) // Renderizar sin el cursor.
 		}
 	}
 	fmt.Println()
 	fmt.Println(Status)
 	if Status != TURN_PLAYER && Status != TURN_COMPUTER { // Si alguien ganó, o si hubo empate
 		fmt.Println(PLAY_AGAIN)
+	} else {
+		fmt.Println()
 	}
+	fmt.Println()
+	fmt.Println("============================================================================================")
 }
 
 //
@@ -141,13 +143,13 @@ func HideTerminalCursor(option string) { // Oculto el cursor de la terminal
 func ShowWinner(winner string) { // Muestro un mensaje indicando quen gano la partida.
 	if winner == PLAYER {
 		Status = "PLAYER WINS!!"
-		playerWins++
+		PlayerWins++
 	} else if winner == COMPUTER {
 		Status = "COMPUTER WINS!!"
-		computerWins++
+		ComputerWins++
 	} else {
 		Status = DRAW
-		draws++
+		Draws++
 	}
 }
 
@@ -157,7 +159,7 @@ func ShowWinner(winner string) { // Muestro un mensaje indicando quen gano la pa
 func computerElection() {
 	time.Sleep(time.Millisecond * COMPUTER_THINK_TIME) // Genero una demora para simular el pensar de la computadora
 
-	if difficuty == EASY {
+	if Difficuty == EASY {
 		var y int
 		var x int
 		for {
@@ -165,7 +167,7 @@ func computerElection() {
 			var randNumY = rand.Intn(3)
 			var randNumX = rand.Intn(3)
 
-			// Adapto esos números a las posiciones de mi tablero de juego.
+			// Adapto los números random a las posiciones de mi tablero de juego.
 			if randNumY == 0 {
 				y = 0
 			} else if randNumY == 1 {
@@ -191,7 +193,6 @@ func computerElection() {
 				}
 				break
 			}
-
 		}
 	} else { // Si la dificultad es HARD
 		switch remainingTurns {
@@ -264,9 +265,9 @@ func computerElection() {
 			} else {
 				ShowWinner(COMPUTER)
 			}
-		case 0: // Quinto turno de la computadora.
+		case 0: // Quinto y último turno de la computadora.
 			if !searchForBestPlay(COMPUTER) {
-				if string(BoardGame[0][0]) == EMPTY { // La computadora busca la  ultima esquina vacia para pone su ficha.
+				if string(BoardGame[0][0]) == EMPTY { // La computadora busca la última esquina vacia para pone su ficha.
 					BoardGame[0] = fmt.Sprintf("%s%s", COMPUTER, BoardGame[0][1:])
 				} else if string(BoardGame[0][8]) == EMPTY {
 					BoardGame[0] = fmt.Sprintf("%s%s", BoardGame[0][:8], COMPUTER)
@@ -315,12 +316,13 @@ func searchForBestPlay(CorP string) bool { // CorP = COMPUTER o PLAYER
 //
 //
 
-func WinControl(CorP string, y int, x int, boardGame []string) bool { // CorP = COMPUTER o PLAYER
+func WinControl(CorP string, y int, x int, boardGame []string) bool { // CorP = COMPUTER o PLAYER. Se comtrola si la computadora o el jugador ganaron en su última jugada, o en una jugada de prueba.
+	// Se busca en cada fila.
 	if strings.Count(boardGame[y], CorP) == 3 {
 		return true
 	}
 
-	//  Si en la COLUMNA en la que voy a poner una pieza ya hay dos piezas puestas, se gana la partida.
+	// Se busca en cada columna.
 	count := 0
 	for y := 0; y <= len(boardGame); y = y + 2 {
 		if string(boardGame[y][x]) == CorP {
@@ -331,7 +333,7 @@ func WinControl(CorP string, y int, x int, boardGame []string) bool { // CorP = 
 		return true
 	}
 
-	// Si en la DIAGONALES \ o / hay tres piezas del jugador puesas, se gana la partida.
+	// Se busca en cada diagonal.
 	if (string(boardGame[0][0]) == CorP && string(boardGame[2][4]) == CorP && string(boardGame[4][8]) == CorP) || // Diagonal \
 		(string(boardGame[0][8]) == CorP && string(boardGame[2][4]) == CorP && string(boardGame[4][0]) == CorP) { // Diagonal /
 		return true
@@ -342,7 +344,7 @@ func WinControl(CorP string, y int, x int, boardGame []string) bool { // CorP = 
 //
 //
 
-func ChangeTurn() { // Cambio el mensaje de a quien le toca jugar por no haberse jenerado un ganador en el anterior turno
+func ChangeTurn() { // Cambio el mensaje de a quien le toca jugar por no haberse generado un ganador en el anterior turno
 	if remainingTurns == 0 {
 		ShowWinner(DRAW)
 	} else if Status == TURN_PLAYER {
@@ -361,7 +363,7 @@ func ResetBoardGame() {
 	copy(BoardGame, BoardGameInitial)
 
 	CursorX = 4
-	if difficuty == EASY {
+	if Difficuty == EASY {
 		Status = TURN_PLAYER
 		CursorY = 2
 	} else { // Si la dificultad es HARD
@@ -372,4 +374,29 @@ func ResetBoardGame() {
 		go computerElection() // Ejecuto esta funcion como una co-routine solo para que no aparezcan en la terminal las posibles teclas presionadas durante el turno de la computadora.
 	}
 	remainingTurns = 8
+}
+
+//
+//
+
+func MenuScreen() {
+	ClearTerminal()
+	fmt.Println("============================================================================================")
+	fmt.Println()
+	fmt.Println("\t\t\t\t--------------")
+	fmt.Println("\t\t\t\t-  Ta-Te-Ti  -")
+	fmt.Println("\t\t\t\t--------------")
+	fmt.Println()
+	fmt.Println()
+	fmt.Println("\t\t\t    Select a Difficulty:")
+	fmt.Println("\t\t\t     1- EASY")
+	fmt.Println("\t\t\t     2- HARD")
+	fmt.Println()
+	fmt.Println()
+	fmt.Println()
+	fmt.Println("  Please, adjust the size of your terminal to ensure that you see the entire playing area.")
+	fmt.Println()
+	fmt.Println("  Developed by Gaspar Almada - 2021")
+	fmt.Println()
+	fmt.Println("============================================================================================")
 }
