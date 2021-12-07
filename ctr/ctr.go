@@ -1,4 +1,4 @@
-package ctr // Controllers
+package ctr // Controladores
 
 import (
 	"fmt"
@@ -87,7 +87,7 @@ func RenderGame(show bool) { // Renderizo el tablero junto con información del 
 	ClearTerminal()
 	fmt.Println("============================================================================================")
 	fmt.Println()
-	fmt.Println("Controls:      Use ARROWS KEYS to move the cursor, and the SPACE BAR to select a place.")
+	fmt.Println("Controls:      Use the ARROWS KEYS to move the cursor, and the SPACE BAR to select a place.")
 	fmt.Println()
 	fmt.Println("Difficulty:   ", Difficuty)
 	fmt.Println("Player Wins:  ", PlayerWins)
