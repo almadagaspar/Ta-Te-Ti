@@ -19,10 +19,8 @@ func main() {
 		_ = keyboard.Close()
 	}()
 
-	// ctr.ClearTerminal()             // Limpio la terminal.
 	ctr.HideTerminalCursor("civis") // Desactivo el cursor de la terminal.
 	ctr.MenuScreen()
-	// go ctr.BlinkCursor()            // Ejecuto como una co-routina el parpadeo del cursor del juego
 
 	for {
 		// Registramos que tecla presionó el usuario.
@@ -31,16 +29,16 @@ func main() {
 			log.Fatal(err)
 		}
 
-		if key == keyboard.KeyEsc { // Detectamos si el usuario presiono la tecla para salir del programa:
+		if key == keyboard.KeyEsc { // Detectamos si el usuario presionó la tecla para salir del programa:
 			break
 		}
 
-		// Detectamos que dificultad elije el jugador en la pantalla del Menu.
+		// Detectamos que dificultad elige el jugador en la pantalla del Menu.
 		if ctr.Status == ctr.MENU {
 			if string(char) == "1" {
 				ctr.Difficuty = ctr.EASY
 				ctr.Status = ctr.TURN_PLAYER
-				go ctr.RunGame() // Ejecuto como una co-routina el parpadeo del cursor del juego
+				go ctr.RunGame() // Ejecuto el juego como una co-routina.
 
 			} else if string(char) == "2" {
 				ctr.Difficuty = ctr.HARD
@@ -50,7 +48,7 @@ func main() {
 			}
 		}
 
-		if ctr.Status != ctr.TURN_PLAYER && ctr.Status != ctr.TURN_COMPUTER {
+		if ctr.Status != ctr.TURN_PLAYER && ctr.Status != ctr.TURN_COMPUTER { // En caso de victoria, derrota o empate, preguntamos al jugador si quiere seguir jugando.
 			if string(char) == "n" || string(char) == "N" {
 				ctr.Status = ctr.MENU
 				ctr.Difficuty = ""
@@ -88,7 +86,7 @@ func main() {
 			case keyboard.KeySpace: // Si el jugador quiere poner su pieza y si esta vacio el lugar que ocupa el cursor, la pieza del jugador es colocada.
 				if string(ctr.BoardGame[ctr.CursorY][ctr.CursorX]) == ctr.EMPTY {
 					ctr.BoardGame[ctr.CursorY] = fmt.Sprintf("%s%s%s", ctr.BoardGame[ctr.CursorY][:ctr.CursorX], ctr.PLAYER, ctr.BoardGame[ctr.CursorY][ctr.CursorX+1:])
-					if !ctr.WinControl(ctr.PLAYER, ctr.CursorY, ctr.CursorX, ctr.BoardGame) { // Si el jugador no ganó con la últimaficha que puso...
+					if !ctr.WinControl(ctr.PLAYER, ctr.CursorY, ctr.CursorX, ctr.BoardGame) { // Si el jugador no ganó con la última ficha que puso...
 						ctr.ChangeTurn()
 					} else {
 						ctr.ShowWinner(ctr.PLAYER)

@@ -160,29 +160,10 @@ func computerElection() {
 	time.Sleep(time.Millisecond * COMPUTER_THINK_TIME) // Genero una demora para simular el pensar de la computadora
 
 	if Difficuty == EASY {
-		var y int
-		var x int
 		for {
-			// Genero números random para la próxima posición de la ficha de la computadora.
-			var randNumY = rand.Intn(3)
-			var randNumX = rand.Intn(3)
-
-			// Adapto los números random a las posiciones de mi tablero de juego.
-			if randNumY == 0 {
-				y = 0
-			} else if randNumY == 1 {
-				y = 2
-			} else if randNumY == 2 {
-				y = 4
-			}
-
-			if randNumX == 0 {
-				x = 0
-			} else if randNumX == 1 {
-				x = 4
-			} else if randNumX == 2 {
-				x = 8
-			}
+			// Genero números random para la posición de la próxima ficha de la computadora, y adapto esos números a los indices de mi tablero de juego.
+			y := rand.Intn(3) * 2
+			x := rand.Intn(3) * 4
 
 			if string(BoardGame[y][x]) == EMPTY {
 				BoardGame[y] = fmt.Sprintf("%s%s%s", BoardGame[y][:x], COMPUTER, BoardGame[y][x+1:])
