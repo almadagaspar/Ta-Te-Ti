@@ -39,12 +39,12 @@ func main() {
 				ctr.Difficuty = ctr.EASY
 				ctr.Status = ctr.TURN_PLAYER
 				go ctr.RunGame() // Ejecuto el juego como una co-routina.
+			}
 
-			} else if string(char) == "2" {
+			if string(char) == "2" {
 				ctr.Difficuty = ctr.HARD
 				ctr.Status = ctr.TURN_COMPUTER
 				go ctr.RunGame()
-
 			}
 		}
 
@@ -56,7 +56,9 @@ func main() {
 				ctr.ComputerWins = 0
 				ctr.Draws = 0
 				ctr.MenuScreen()
-			} else if string(char) == "y" || string(char) == "Y" {
+			}
+
+			if string(char) == "y" || string(char) == "Y" {
 				ctr.ResetBoardGame()
 			}
 		}

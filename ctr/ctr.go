@@ -49,6 +49,8 @@ const BLINK_TIME = 250
 const TURN_PLAYER = "Turn: Player"
 const TURN_COMPUTER = "Turn: Computer"
 const DRAW = "IT'S A DRAW!"
+const PLAYER_WINS = "PLAYER WINS!!"
+const COMPUTER_WINS = "COMPUTER WINS!!"
 const MENU = "Menu"
 
 var Status = MENU
@@ -69,12 +71,12 @@ func RunGame() {
 	rand.Seed(time.Now().UnixNano()) // Preparo la variable rand para generar posteriormente un número random.
 	for {
 		if Status == TURN_PLAYER {
-			RenderGame(true)
-			time.Sleep(time.Millisecond * BLINK_TIME)
+			RenderGame(true)                          // Mostrar el tablero CON el cursor.
+			time.Sleep(time.Millisecond * BLINK_TIME) // Genero una demora de tiempo durante la cual el cursor será visible.
 		}
-		RenderGame(false)
-		time.Sleep(time.Millisecond * BLINK_TIME)
-		if Status == MENU {
+		RenderGame(false)                         // Mostrar el tablero SIN el cursor.
+		time.Sleep(time.Millisecond * BLINK_TIME) // Genero una demora de tiempo durante la cual el cursor NO será visible.
+		if Status == MENU {                       // Si el jugador no quiere seguir jugando, finalizo este For.
 			break
 		}
 	}
@@ -83,7 +85,7 @@ func RunGame() {
 //
 //
 
-func RenderGame(show bool) { // Renderizo el tablero junto con información del juego.
+func RenderGame(show bool) { // Renderizo el tablero junto con información del juego. show = ¿ Mostrar el cursor?
 	ClearTerminal()
 	fmt.Println("============================================================================================")
 	fmt.Println()
@@ -121,11 +123,11 @@ func ClearTerminal() {
 		cmd := exec.Command("cmd", "/c", "cls")
 		cmd.Stdout = os.Stdout
 		cmd.Run()
-	} else {
-		cmd := exec.Command("clear") // Limpiar la terminal en Linux o Mac.
-		cmd.Stdout = os.Stdout
-		cmd.Run()
+		return
 	}
+	cmd := exec.Command("clear") // Limpiar la terminal en Linux o Mac.
+	cmd.Stdout = os.Stdout
+	cmd.Run()
 }
 
 //
@@ -142,12 +144,16 @@ func HideTerminalCursor(option string) { // Oculto el cursor de la terminal.
 
 func ShowWinner(winner string) { // Muestro un mensaje indicando quen ganó la partida.
 	if winner == PLAYER {
-		Status = "PLAYER WINS!!"
+		Status = PLAYER_WINS
 		PlayerWins++
-	} else if winner == COMPUTER {
-		Status = "COMPUTER WINS!!"
+	}
+
+	if winner == COMPUTER {
+		Status = COMPUTER_WINS
 		ComputerWins++
-	} else {
+	}
+
+	if winner == DRAW {
 		Status = DRAW
 		Draws++
 	}
@@ -165,9 +171,9 @@ func computerElection() {
 			y := rand.Intn(3) * 2
 			x := rand.Intn(3) * 4
 
-			if string(BoardGame[y][x]) == EMPTY {
-				BoardGame[y] = fmt.Sprintf("%s%s%s", BoardGame[y][:x], COMPUTER, BoardGame[y][x+1:])
-				if !WinControl(COMPUTER, y, x, BoardGame) { // Si con la última pieza que puso la computadora NO ganó la partida...
+			if string(BoardGame[y][x]) == EMPTY { // Si la posición en la que la computadora quiere poner su ficha esta vacía...
+				BoardGame[y] = fmt.Sprintf("%s%s%s", BoardGame[y][:x], COMPUTER, BoardGame[y][x+1:]) // Actualizo el tablero con la nueva ficha de la computadora.
+				if !WinControl(COMPUTER, y, x, BoardGame) {                                          // Si con la última pieza que puso la computadora NO ganó la partida...
 					ChangeTurn()
 				} else {
 					ShowWinner(COMPUTER)
@@ -175,7 +181,9 @@ func computerElection() {
 				break
 			}
 		}
-	} else { // Si la dificultad es HARD
+	}
+
+	if Difficuty == HARD {
 		switch remainingTurns {
 		case 8: // Primer turno de la computadora, pone su ficha en el centro.
 			BoardGame[2] = fmt.Sprintf("%s%s%s", BoardGame[2][:4], COMPUTER, BoardGame[2][5:])
@@ -331,7 +339,7 @@ func ChangeTurn() { // Cambio el mensaje de a quién le toca jugar por no habers
 	} else if Status == TURN_PLAYER {
 		Status = TURN_COMPUTER
 		go computerElection() // Ejecuto esta funcion como una co-routine solo para que no aparezcan en la terminal las posibles teclas presionadas durante el turno de la computadora.
-	} else {
+	} else if Status == TURN_COMPUTER {
 		Status = TURN_PLAYER
 	}
 	remainingTurns--
@@ -341,13 +349,15 @@ func ChangeTurn() { // Cambio el mensaje de a quién le toca jugar por no habers
 //
 
 func ResetBoardGame() {
-	copy(BoardGame, BoardGameInitial)
+	copy(BoardGame, BoardGameInitial) // Quito todas la fichas del tablero, creando una copia por valor de un tablero vacio, al que se usa durante el juego.
 
 	CursorX = 4
 	if Difficuty == EASY {
 		Status = TURN_PLAYER
 		CursorY = 2
-	} else { // Si la dificultad es HARD
+	}
+
+	if Difficuty == HARD {
 		CursorY = 0
 		next_y_1 = -1
 		next_x_1 = -1
